@@ -4,22 +4,14 @@
 <dict>
     <key>Label</key>
     <string>com.kangwooklee29.btsunset</string>
-
     <key>ProgramArguments</key>
     <array>
-        <string></string>
+        <string>/bin/bash</string>
+        <string>YourUsername/.btsunset/btsunset.sh</string>
     </array>
-
-    <key>StartInterval</key>
-    <integer>600</integer> <!-- 600초는 10분 -->
-
     <key>RunAtLoad</key>
     <true/>
-
-    <key>StandardErrorPath</key>
-    <string>/tmp/com.kangwooklee29.btsunset.err</string>
-
-    <key>StandardOutPath</key>
-    <string>/tmp/com.kangwooklee29.btsunset.out</string>
+    <key>KeepAlive</key>
+    <true/>
 </dict>
 </plist>
