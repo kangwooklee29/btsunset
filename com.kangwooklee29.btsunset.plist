@@ -7,7 +7,7 @@
 
     <key>ProgramArguments</key>
     <array>
-        <string>~/.btsunset/btsunset.sh</string>
+        <string></string>
     </array>
 
     <key>StartInterval</key>
