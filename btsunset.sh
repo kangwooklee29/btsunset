@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -x
+
 # Global variables
 log_file_path="/tmp/com.kangwooklee29.btsunset.log"
 ap_list_path="$HOME/.btsunset/current_wifi_ap_list"
@@ -19,6 +21,7 @@ check_trim_log() {
 
 # Checks Bluetooth turn-off time
 check_turn_off_time() {
+    # prevents too frequent turn-off
     if [ $(( $(date +%s) - $(stat -f "%m" "$turn_off_time_path" 2>/dev/null || echo 0) )) -le 10800 ]; then
         log_message "Script ended, reason: 3 hours"
         exit 0
@@ -50,7 +53,8 @@ find_airport() {
 # Check if current AP list is different from the previous
 check_ap_list_difference() {
     airport=$1
-    current_ap_list=$($airport -s | tail -n +2 | awk '{print $1}')
+    current_ap_list=$2
+
     if [ ! -f "$ap_list_path" ]; then
         echo "$current_ap_list" > "$ap_list_path"
         log_message "Script ended, reason: Initialized AP list"
@@ -60,7 +64,8 @@ check_ap_list_difference() {
     previous_ap_list=$(cat "$ap_list_path")
 
     for current_ap in $current_ap_list; do
-        if grep -q -x "$current_ap" <<< "$previous_ap_list"; then
+        escapedString=$(echo "$current_ap" | sed 's/[][\\.^$\*]/\\&/g')
+        if grep -q -x "$escapedString" <<< "$previous_ap_list"; then
             return 1 # Not Unique
         fi
     done
@@ -72,7 +77,7 @@ check_ap_list_difference() {
 main() {
     check_trim_log
     log_message "Script started at: $(date)"
-    check_turn_off_time
+    # check_turn_off_time
     check_blueutil
     airport=$(find_airport)
     if [ $? -ne 0 ]; then
@@ -81,15 +86,19 @@ main() {
         exit 1
     fi
 
-    if check_ap_list_difference "$airport"; then
+    current_ap_list=$($airport -s | tail -n +2 | awk '{print $1}')
+    if check_ap_list_difference "$airport" "$current_ap_list"; then
         blueutil -p 0 # turn off bluetooth
         touch "$turn_off_time_path"
-        echo $($airport -s | tail -n +2 | awk '{print $1}') > "$ap_list_path"
         log_message "Bluetooth turned off due to new network."
     else
+        if [ $(blueutil -p) -eq 0 ]; then
+            blueutil -p 1 # turn on bluetooth
+        fi
         log_message "Same network detected. Bluetooth remains on."
     fi
 
+    echo "$current_ap_list" > "$ap_list_path"
     log_message "Script ended, reason: script succeeded"
 }
 
